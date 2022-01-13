@@ -20,7 +20,7 @@ To execute this command :
 - You need to generate the FileMapping.txt like in DiscoPoP,
 - You need to put the "-g" option when you translate the code into LLVM-IR with the previous link.
 
-3)To put this version on Polly into the one install in the first step, you just need to copy past this Polly folder instead the present one by default.
+3)To put this version on Polly into the one install in the first step, you just need to copy paste this Polly folder instead the present one by default.
 If it's not working my changes are in the lib/Analysis/DependenceInfo.cpp and include/polly/DependenceInfo.h
 
 
