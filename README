@@ -1,0 +1,80 @@
+How to install Polly :
+1) Follow the get started web page (https://polly.llvm.org/get_started.html)
+It can be very long and commands can changes on the web page but they are the following commands :
+git clone https://github.com/llvm/llvm-project.git
+mkdir build && cd build
+cmake '-DLLVM_ENABLE_PROJECTS=clang;polly' ../llvm
+cmake --build .
+
+2)Execute the good version of Polly. Polly can be install by default on your computer.
+To execute the one you just built, you need to put, before the command, the path of the bin directory of new Polly build.
+For example, to compile a code with Polly, you do :
+clang -O3 -mllvm -polly FILE.c
+Now, before the clang you will put the good path :
+/home/.../llvm-project/build/bin/clang -O3 -mllvm -polly FILE.c
+To see all the command that you can do to decompose Polly : https://polly.llvm.org/docs/HowToManuallyUseTheIndividualPiecesOfPolly.html
+The command that I used to change the data dependence format : 
+/home/elouan/llvm-project/build/bin/opt -fm-path ./FileMapping.txt -basic-aa -polly-use-llvm-names -polly-dependences -analyze FILE.preopt.ll -polly-process-unprofitable -debug
+To execute this command :
+- You need to do all the previous command in the previous link,
+- You need to generate the FileMapping.txt like in DiscoPoP,
+- You need to put the "-g" option when you translate the code into LLVM-IR with the previous link.
+
+3)To put this version on Polly into the one install in the first step, you just need to copy past this Polly folder instead the present one by default.
+If it's not working my changes are in the lib/Analysis/DependenceInfo.cpp and include/polly/DependenceInfo.h
+
+
+4)To rebuild polly, you just need to do the last command of the installation on the same build folder :
+cd llvm-project/build/
+cmake --build .
+
+BE CAREFULL : These commands may not be up to date, this document was done on October 25, 2021.
+To view the updated version, please see the get started web site and all the polly documentation : https://polly.llvm.org/get_started.html
+
+
+
+My main changes are between the two "start add" and "end add" comments in the DependenceInfo.cpp file.
+There are also a "start add DISCOPOP" and "end add DISCOPOP" comments who are DiscoPoP functions that I used to get the variable name and the line number of the two statements involved in a data dependence.
+
+Now the problem is to combine Polly ith DiscoPoP. When you build DiscoPoP, it will also build LLVM. But, in LLVM there is also, by default a Polly version. And so, DiscoPoP will build this Polly version and not the one I changed. For more explication, you can see the discussion I had with the polly developer : https://groups.google.com/g/polly-dev/c/VE2AmfI-NcI
+Here are the errors that I have :
+
+
+CMake Error at polly/cmake/polly_macros.cmake:23 (add_library):
+  add_library cannot create target "PollyISL" because an imported target with
+  the same name already exists.
+Call Stack (most recent call first):
+  polly/lib/External/CMakeLists.txt:284 (add_polly_library)
+
+
+CMake Error at polly/lib/External/CMakeLists.txt:312 (target_compile_options):
+  target_compile_options may only set INTERFACE properties on IMPORTED
+  targets
+
+
+CMake Error at /usr/lib/llvm-13/lib/cmake/llvm/AddLLVM.cmake:538 (add_library):
+  add_library cannot create target "Polly" because an imported target with
+  the same name already exists.
+Call Stack (most recent call first):
+  /usr/lib/llvm-13/lib/cmake/llvm/AddLLVM.cmake:796 (llvm_add_library)
+  /usr/lib/llvm-13/lib/cmake/llvm/AddLLVM.cmake:997 (add_llvm_library)
+  polly/lib/CMakeLists.txt:54 (add_llvm_pass_plugin)
+
+
+CMake Error at /usr/lib/llvm-13/lib/cmake/llvm/AddLLVM.cmake:662 (target_link_libraries):
+  Cannot specify link libraries for target "Polly" which is not built by this
+  project.
+Call Stack (most recent call first):
+  /usr/lib/llvm-13/lib/cmake/llvm/AddLLVM.cmake:796 (llvm_add_library)
+  /usr/lib/llvm-13/lib/cmake/llvm/AddLLVM.cmake:997 (add_llvm_library)
+  polly/lib/CMakeLists.txt:54 (add_llvm_pass_plugin)
+
+
+-- Configuring incomplete, errors occurred!
+See also "/home/elouan/discopop/build/CMakeFiles/CMakeOutput.log".
+See also "/home/elouan/discopop/build/CMakeFiles/CMakeError.log".
+
+
+For information, I compiled it with this command : CC=clang; CXX=clang++; cmake ..
+To have these errors, I just copied the Polly folder into DiscoPoP and I had this line : add_subdirectory(polly) into the CMakeLists.txt file at the root of DiscoPoP.
+If you want any more information about the problem or about my work you can contact me here : elouan.jeannot@laposte.net
